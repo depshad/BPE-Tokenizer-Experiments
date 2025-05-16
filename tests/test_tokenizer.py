@@ -10,7 +10,7 @@ import psutil
 import pytest
 import tiktoken
 
-from bpe_tokenizer.tokenizer import get_tokenizer
+from tokenizer.tokenizer import get_tokenizer
 from tests.common import FIXTURES_PATH, gpt2_bytes_to_unicode
 
 VOCAB_PATH = FIXTURES_PATH / "gpt2_vocab.json"
@@ -95,14 +95,11 @@ def test_empty_matches_tiktoken():
         merges_path=MERGES_PATH,
     )
     test_string = ""
-
     reference_ids = reference_tokenizer.encode(test_string)
     ids = tokenizer.encode(test_string)
     assert ids == reference_ids
-
     tokenized_string = [tokenizer.decode([x]) for x in ids]
     assert tokenized_string == []
-
     assert tokenizer.decode(ids) == test_string
     assert reference_tokenizer.decode(reference_ids) == test_string
 

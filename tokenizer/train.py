@@ -89,6 +89,7 @@ class BPETrainer:
         self.pre_tokenize_pattern= pre_tokenize_pattern
         self.vocab = {i: bytes([i]) for i in range(256)}  # Initialize with all bytes
         self.merges: List[Tuple[bytes, bytes]] = []
+        self.dict_merges_id: dict[Tuple[int, int],int] = {} # map from pair ids to merged token ID
         self.num_special_tokens = len(special_tokens)
         self.next_index = len(self.vocab)
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -127,13 +128,15 @@ class BPETrainer:
             self.vocab[self.next_index] = new_token
 
             self._merge_pair(self.next_index, max_pair, pair_manager, token_dicts.token_frequencies, linked_lists)
+            # Update merges_id and merges
+            self.dict_merges_id[max_pair[0], max_pair[1]] = self.next_index
             self.merges.append((self.vocab[max_pair[0]], self.vocab[max_pair[1]]))
             self.logger.debug(f"Created new token {new_token} with ID {self.next_index}.")
             self.next_index += 1
             self.logger.debug(f"Next available token ID: {self.next_index}")
 
         self._add_special_tokens()
-        return self.vocab, self.merges
+        return self.vocab, self.merges, self.dict_merges_id
 
     def pre_tokenize(self, pattern: str) -> List[str]:
         tokens = re.findall(pattern, self.text)
@@ -242,7 +245,6 @@ class BPETrainer:
                 # Create the new merged node
                 new_node = ListNode(next_index)
                 new_node.prev, new_node.next = left_node.prev, right_node.next
-
                 if left_node.prev:
                     left_node.prev.next = new_node
                 else:
@@ -293,10 +295,8 @@ class BPETrainer:
         if new_node.next:
             old_pair = (right_node.token, new_node.next.token)
             new_pair = (new_node.token, new_node.next.token)
-
             # Remove old pair
             pair_manager.remove_pair(old_pair, token_id, (right_node, new_node.next), token_freq)
-
             # Add new pair
             pair_manager.add_pair(new_pair, token_id, (new_node, new_node.next), token_freq)
 
@@ -309,13 +309,12 @@ class BPETrainer:
         return
 
 
-
 def run_train_bpe(input_path, vocab_size, special_tokens):
     with open(input_path, 'r') as f:
         text = f.read()
     GPT2_PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
     trainer = BPETrainer(text, GPT2_PAT, vocab_size, special_tokens)
-    vocab, merges = trainer.train()
+    vocab, merges, dict_merges_id = trainer.train()
     return vocab, merges
 
 
