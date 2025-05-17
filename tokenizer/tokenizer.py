@@ -117,8 +117,8 @@ class Tokenizer:
         # ToDo Merge the pairs based on the priority order (i.e. most frequent pair first), this can be derived from the vocab order (lower the order the better)
         # Or we can also output pair frequency in merges
         class TokenNode:
-            def __init__(self, token_id=None):
-                self.token_id = token_id
+            def __init__(self, token_byte=None):
+                self.token_byte = token_byte
                 self.next = None
                 self.prev = None
         # Create dummy head
@@ -126,6 +126,8 @@ class Tokenizer:
         curr = dummy_head
         # Build linked list starting after dummy head
         for char in token:
+            # Convert char to byte
+
             token_id = self.inverse_vocab[char]
             new_node = TokenNode(token_id)
             curr.next = new_node
