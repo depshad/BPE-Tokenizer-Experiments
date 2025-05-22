@@ -48,10 +48,6 @@ def test_train_bpe():
             for merge_token_1, merge_token_2 in gpt2_reference_merges
         ]
 
-    # Debug merges
-    merges_not_in_reference = [m for m in merges if m not in reference_merges]
-    reference_not_in_merges = [m for m in reference_merges if m not in merges]
-
 
 
     # Compare the vocab to the expected output vocab
