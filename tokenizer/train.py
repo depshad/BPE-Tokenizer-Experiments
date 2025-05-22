@@ -1,8 +1,9 @@
 from collections import defaultdict, Counter
 from typing import List, Dict, Tuple, Optional, DefaultDict
-import regex as re
 from dataclasses import dataclass, field
 import logging
+
+from tokenizer.utils import pre_tokenize
 
 logger = logging.getLogger(__name__)
 
@@ -285,7 +286,7 @@ class BPETrainer:
         num_special_tokens = len(self.special_tokens)
 
         # Step 1: Pre-tokenization
-        raw_text_tokens = self.pre_tokenize(pattern=self.regex_tokenizer_pattern, text=text)
+        raw_text_tokens = pre_tokenize(pattern=self.regex_tokenizer_pattern, text=text)
         self.logger.debug(f"Regex pre-tokenization produced {len(raw_text_tokens)} raw text tokens.")
 
         # Step 2: Encode pre-tokens as byte sequences, assign token IDs and count frequencies
@@ -337,9 +338,6 @@ class BPETrainer:
         self._add_special_tokens(vocab=vocab)
         return BPEModel(vocab, merges, pair_to_merged_id)
 
-    def pre_tokenize(self, pattern: str, text:str) -> List[str]:
-        tokens = re.findall(pattern, text)
-        return tokens
 
     def _encode_and_index_tokens(self, pre_bpe_tokens: List[str]) -> PreTokenization:
         """
